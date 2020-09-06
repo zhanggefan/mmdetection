@@ -105,46 +105,84 @@ class TencentImageSplitTool(object):
 
 if __name__ == '__main__':
     ratio = 0.9
+    ratio_dgb = 0.001
+
     origset = '/home/zhanggefan/Downloads/Tencent/det/origindata'
     trainset = '/home/zhanggefan/Downloads/Tencent/det/train'
     valset = '/home/zhanggefan/Downloads/Tencent/det/val'
     trainsetsplit = '/home/zhanggefan/Downloads/Tencent/det/trainsplit'
     valsetsplit = '/home/zhanggefan/Downloads/Tencent/det/valsplit'
 
-    if not (osp.isdir(trainset) or osp.isdir(valset)):
-        os.mkdir(trainset)
-        os.mkdir(trainset + '/img')
-        os.mkdir(trainset + '/label')
-        os.mkdir(valset)
-        os.mkdir(valset + '/img')
-        os.mkdir(valset + '/label')
+    trainset_dbg = '/home/zhanggefan/Downloads/Tencent/det/train_dbg'
+    valset_dbg = '/home/zhanggefan/Downloads/Tencent/det/val_dbg'
+    trainsetsplit_dbg = '/home/zhanggefan/Downloads/Tencent/det/trainsplit_dbg'
+    valsetsplit_dbg = '/home/zhanggefan/Downloads/Tencent/det/valsplit_dbg'
 
-        imgs = glob.glob(origset + '/img/*.jpg')
-        imgs = [*map(lambda x: osp.split(x)[-1][:-4], imgs)]
-        np.random.shuffle(imgs)
-        start = int(len(imgs) * ratio)
-        for i, img in enumerate(imgs):
-            dest = trainset if i < start else valset
 
-            img_src = f'{origset}/img/{img}.jpg'
-            img_des = f'{dest}/img/{img}.jpg'
-            ann_src = f'{origset}/label/{img}.circle'
-            ann_des = f'{dest}/label/{img}.circle'
+    def makeval(_trainset, _valset, totalratio=None):
+        if not (osp.isdir(_trainset) or osp.isdir(_valset)):
+            os.mkdir(_trainset)
+            os.mkdir(_trainset + '/img')
+            os.mkdir(_trainset + '/label')
+            os.mkdir(_valset)
+            os.mkdir(_valset + '/img')
+            os.mkdir(_valset + '/label')
 
-            copyfile(img_src, img_des)
-            copyfile(ann_src, ann_des)
+            imgs = glob.glob(origset + '/img/*.jpg')
+            imgs = [*map(lambda x: osp.split(x)[-1][:-4], imgs)]
+            np.random.shuffle(imgs)
+
+            if totalratio is not None:
+                start = int(len(imgs) * ratio * totalratio)
+                end = int(len(imgs) * totalratio)
+            else:
+                start = int(len(imgs) * ratio)
+                end = int(len(imgs))
+
+            for i, img in enumerate(imgs):
+                if i >= end:
+                    return
+                dest = _trainset if i < start else _valset
+
+                img_src = f'{origset}/img/{img}.jpg'
+                img_des = f'{dest}/img/{img}.jpg'
+                ann_src = f'{origset}/label/{img}.circle'
+                ann_des = f'{dest}/label/{img}.circle'
+
+                copyfile(img_src, img_des)
+                copyfile(ann_src, ann_des)
+
+
+    makeval(trainset, valset)
+    makeval(trainset_dbg, valset_dbg, ratio_dgb)
 
     trainsplit = TencentImageSplitTool(trainset,
                                        trainsetsplit,
                                        tile_overlap=(150, 150),
-                                       tile_shape=(600, 600),
+                                       tile_shape=(512, 512),
                                        # num_process=0
                                        )
     trainsplit.split()
     valsplit = TencentImageSplitTool(valset,
                                      valsetsplit,
                                      tile_overlap=(150, 150),
-                                     tile_shape=(600, 600),
+                                     tile_shape=(512, 512),
                                      # num_process=0
                                      )
     valsplit.split()
+
+    # debug ------------------
+    trainsplit_dbg = TencentImageSplitTool(trainset_dbg,
+                                           trainsetsplit_dbg,
+                                           tile_overlap=(150, 150),
+                                           tile_shape=(512, 512),
+                                           # num_process=0
+                                           )
+    trainsplit_dbg.split()
+    valsplit_dbg = TencentImageSplitTool(valset_dbg,
+                                         valsetsplit_dbg,
+                                         tile_overlap=(150, 150),
+                                         tile_shape=(512, 512),
+                                         # num_process=0
+                                         )
+    valsplit_dbg.split()
