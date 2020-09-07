@@ -127,13 +127,15 @@ class ExportedMdl(nn.Module):
             bbox_out.append(delta2bbox(anchor, bbox_pred, one_meta['img_shape']))
             cls_out.append(cls_score.sigmoid())
 
-        return torch.cat(bbox_out, dim=1), torch.cat(cls_out, dim=1)
+        bbox_out = torch.cat(bbox_out, dim=1)
+        cls_out = torch.cat(cls_out, dim=1)
+        return torch.cat([cls_out, bbox_out], dim=-1)
 
 
 model = ExportedMdl(model)
 # model.forward = partial(model.forward, img_metas=[[one_meta]], return_loss=False)
 # ret = model(one_img)
-# register_extra_symbolics(10)
+# register_extra_symbolics(9)
 
 torch.onnx.export(
     model, one_img,
@@ -143,5 +145,5 @@ torch.onnx.export(
     verbose=True,
     opset_version=9,
     input_names=['input'],
-    output_names=['bbox', 'score']
+    output_names=['bbox']
 )
