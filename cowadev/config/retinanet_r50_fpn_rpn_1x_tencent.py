@@ -1,7 +1,7 @@
 _base_ = [
     './model/retinanet_r50_fpn_rpn.py',
     './dataset/tencent_rpn.py',
-    './schedule/schedule_2x.py',
+    './schedule/schedule_1x.py',
     './runtime/runtime.py'
 ]
 # optimizer
