@@ -1,5 +1,5 @@
 dataset_type = 'TrafficSignDataset'
-data_root = '/home/zhanggefan/Downloads/Tencent/det/'
+data_root = 'data/tencent/det/'
 debug_postfix = "_dbg"
 
 img_norm_cfg = dict(

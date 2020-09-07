@@ -1,0 +1,1 @@
+python tools/pytorch2onnx.py cowadev/config/retinanet_r50_fpn_rpn_2x_tencent.py work_dirs/retinanet_r50_fpn_rpn_2x_tencent/epoch_2.pth --opset-version 11 --shape 1080 1920 --show --output-file work_dirs/retinanet_r50_fpn_rpn_2x_tencent/traffdet.onnx

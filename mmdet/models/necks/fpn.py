@@ -1,4 +1,5 @@
 import torch.nn as nn
+import torch
 import torch.nn.functional as F
 from mmcv.cnn import ConvModule, xavier_init
 
@@ -181,9 +182,9 @@ class FPN(nn.Module):
                 laterals[i - 1] += F.interpolate(laterals[i],
                                                  **self.upsample_cfg)
             else:
-                prev_shape = laterals[i - 1].shape[2:]
+                prev_shape = torch.tensor(laterals[i - 1].shape[2:])
                 laterals[i - 1] += F.interpolate(
-                    laterals[i], size=prev_shape, **self.upsample_cfg)
+                    laterals[i], size=(prev_shape[0], prev_shape[1]), **self.upsample_cfg)
 
         # build outputs
         # part 1: from original levels
