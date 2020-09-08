@@ -5,11 +5,11 @@ import torch
 from torch import nn
 from functools import partial
 import numpy as np
-from mmcv.onnx.symbolic import register_extra_symbolics
+from mmcv.onnx.symbolic import register_op
 
 cfg = '../cowadev/config/retinanet_r50_fpn_rpn_2x_tencent.py'
 ckpt = '../work_dirs/retinanet_r50_fpn_rpn_2x_tencent/epoch_2.pth'
-out = '/home/cowa006/jupyternotebooks/traffdet.onnx'
+out = '/home/cowa006/gitrepo/CRPilot-1.0/trafficsign/det/traffdet.onnx'
 inpt = '../data/tencent/det/val/img/10007_20171116_071955.jpg'
 input_shape = (1920, 1080)
 
@@ -103,9 +103,11 @@ def delta2bbox(rois,
 class ExportedMdl(nn.Module):
     def __init__(self, model):
         super(ExportedMdl, self).__init__()
+        self.img_pad = nn.ZeroPad2d((0, 0, 4, 4))
         self.model = model
 
     def forward(self, img):
+        img = self.img_pad(img)
         x = self.model.backbone(img)
         x = self.model.neck(x)
 
@@ -129,13 +131,24 @@ class ExportedMdl(nn.Module):
 
         bbox_out = torch.cat(bbox_out, dim=1)
         cls_out = torch.cat(cls_out, dim=1)
-        return torch.cat([cls_out, bbox_out], dim=-1)
+        return torch.cat([bbox_out, cls_out], dim=-1)
 
 
 model = ExportedMdl(model)
+
+
 # model.forward = partial(model.forward, img_metas=[[one_meta]], return_loss=False)
 # ret = model(one_img)
 # register_extra_symbolics(9)
+
+def upsample_nearest2d(g, input, output_size, *args):
+    # height_scale = float(output_size[-2]) / input.type().sizes()[-2]
+    # width_scale = float(output_size[-1]) / input.type().sizes()[-1]
+    return g.op("Upsample", input,
+                scales_f=(1, 1, 2, 2),
+                mode_s="nearest")
+
+register_op('upsample_nearest2d', upsample_nearest2d, '', 9)
 
 torch.onnx.export(
     model, one_img,
@@ -145,5 +158,6 @@ torch.onnx.export(
     verbose=True,
     opset_version=9,
     input_names=['input'],
-    output_names=['bbox']
+    output_names=['bbox'],
+    enable_onnx_checker=False
 )
