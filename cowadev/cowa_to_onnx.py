@@ -7,7 +7,7 @@ from functools import partial
 import numpy as np
 from mmcv.onnx.symbolic import register_op
 
-cfg = '../cowadev/config/retinanet_r50_fpn_rpn_2x_tencent.py'
+cfg = '../cowadev/config/retinanet_r50_fpn_rpn_1x_tencent.py'
 ckpt = '../work_dirs/retinanet_r50_fpn_rpn_2x_tencent/epoch_2.pth'
 out = '/home/cowa006/gitrepo/CRPilot-1.0/trafficsign/det/traffdet.onnx'
 inpt = '../data/tencent/det/val/img/10007_20171116_071955.jpg'
@@ -131,7 +131,7 @@ class ExportedMdl(nn.Module):
 
         bbox_out = torch.cat(bbox_out, dim=1)
         cls_out = torch.cat(cls_out, dim=1)
-        return torch.cat([bbox_out, cls_out], dim=-1)
+        return torch.cat([bbox_out, cls_out], dim=-1).unsqueeze(1)  # make a fake row
 
 
 model = ExportedMdl(model)
